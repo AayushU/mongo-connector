@@ -33,8 +33,8 @@ __doc__ = ""
 doclines = __doc__.split("\n")
 
 setup(name="mongo-connector",
-      version="1.0.0",
-      maintainer="10Gen",
+      version="1.0.1",
+      maintainer="10gen",
       maintainer_email="leonardo.stedile@10gen.com",
       #url = "https://github.com/AayushU/mongo-connector",
       license="http://www.apache.org/licenses/LICENSE-2.0.html",

@@ -254,13 +254,13 @@ class OplogThread(threading.Thread):
                     dump_set.append(namespace)
 
         timestamp = util.retry_until_ok(self.get_last_oplog_timestamp)
+        long_ts = util.bson_ts_to_long(timestamp)
         if timestamp is None:
             return None
         for namespace in dump_set:
             db, coll = namespace.split('.', 1)
             target_coll = self.main_connection[db][coll]
             cursor = util.retry_until_ok(target_coll.find)
-            long_ts = util.bson_ts_to_long(timestamp)
 
             try:
                 for doc in cursor:

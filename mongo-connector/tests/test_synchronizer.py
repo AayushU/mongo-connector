@@ -181,16 +181,14 @@ class TestSynchronizer(unittest.TestCase):
         time.sleep(5)
         while len(s._search()) != NUMBER_OF_DOCS:
             time.sleep(5)
-       # conn['test']['test'].create_index('name')
         for i in range(0, NUMBER_OF_DOCS):
-            #a = s.search('Paul ' + str(i))
             a = s._search()
             b = conn['test']['test'].find_one({'name': 'Paul ' + str(i)})
             for it in a:
                 if (it['name'] == 'Paul' + str(i)):
                     self.assertEqual(it['_id'], it['_id'])
         print("PASSED TEST STRESS")
-
+            
     def test_stressed_rollback(self):
         """Test stressed rollback with number of documents equal to specified
         in global variable. Rollback is performed like before, but with more
