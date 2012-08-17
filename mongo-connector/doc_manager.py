@@ -51,7 +51,6 @@ class DocManager():
     def upsert(self, doc):
         """Adds a document to the doc dict.
         """
-
         self.doc_dict[doc[self.unique_key]] = doc
 
     def remove(self, doc):

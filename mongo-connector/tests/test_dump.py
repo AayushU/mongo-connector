@@ -53,7 +53,7 @@ from pymongo.errors import ConnectionFailure, OperationFailure, AutoReconnect
 PORTS_ONE = {"PRIMARY": "27117", "SECONDARY": "27118", "ARBITER": "27119",
     "CONFIG": "27220", "MONGOS": "27117"}
 conn = None
-NUMBER_OF_DOCS = 100000
+NUMBER_OF_DOCS = 10000
 c = None
 s = None
 
@@ -71,14 +71,31 @@ class TestDump(unittest.TestCase):
         """Test initial dump while new documents are being inserted.
         All documents should show be in database.
         """
+        long_string = 'long string '
+        long_string *= 42
         for i in range(0, NUMBER_OF_DOCS):
-            conn['test']['test'].insert({'name': 'Paul ' + str(i)})
+            conn['test']['test'].insert({'name': 'Paul', 'number': i})
         time.sleep(5)
         c.start()
-        for i in range(0, NUMBER_OF_DOCS):
-            conn['test']['test'].insert({'name': 'Pauline ' + str(i)})
-        while len(s._search()) != 2*NUMBER_OF_DOCS:
-            time.sleep(5)
+        for i in range(NUMBER_OF_DOCS-1, -1, -1):
+            conn['test']['test'].update({'number': i}, {'name': 'Pauline', 'number' : i})
+            if i % 2 == 0:
+                conn['test']['test'].update({'number': i}, {'name' : 'Pauline', 'number' : i, 'info': long_string})
+        while True:
+            error = False;
+            for doc in s._search():
+                if('Pauline' != doc['name']):
+                    error = True;
+                    time.sleep(1)
+                    break;
+                if doc['number'] % 2 == 0:
+                    if(doc['info'] != long_string):
+                        time.sleep(1)
+                        break;
+            if error is False:
+                break;
+                                
+
         print ("PASSED INITIAL DUMP TEST");
 
 

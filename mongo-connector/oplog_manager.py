@@ -138,7 +138,6 @@ class OplogThread(threading.Thread):
                             doc['_ts'] = util.bson_ts_to_long(entry['ts'])
                             doc['ns'] = ns
                             self.doc_manager.upsert(doc)
-
                     last_ts = entry['ts']
             except (pymongo.errors.AutoReconnect,
                     pymongo.errors.OperationFailure):
@@ -215,7 +214,6 @@ class OplogThread(threading.Thread):
         if cursor_len == 1:     # means we are the end of the oplog
             self.checkpoint = timestamp
             #to commit new TS after rollbacks
-
             return cursor
         elif cursor_len > 1:
             doc = next(cursor)
@@ -232,7 +230,8 @@ class OplogThread(threading.Thread):
             return self.get_oplog_cursor(timestamp)
 
     def dump_collection(self):
-        """Dumps collection into the target system.
+        """Dumps collection into the target system. Returns the timestamp
+        of the last oplog entry right before it starts dumping.
 
         This method is called when we're initializing the cursor and have no
         configs i.e. when we're starting for the first time.
@@ -257,11 +256,11 @@ class OplogThread(threading.Thread):
         long_ts = util.bson_ts_to_long(timestamp)
         if timestamp is None:
             return None
+                        
         for namespace in dump_set:
             db, coll = namespace.split('.', 1)
             target_coll = self.main_connection[db][coll]
             cursor = util.retry_until_ok(target_coll.find)
-
             try:
                 for doc in cursor:
                     doc['ns'] = namespace
@@ -275,7 +274,6 @@ class OplogThread(threading.Thread):
                 logging.error('%s %s %s' % (err_msg, effect, self.oplog))
                 self.running = False
                 return
-
         return timestamp
 
     def get_last_oplog_timestamp(self):
