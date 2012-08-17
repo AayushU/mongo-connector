@@ -51,20 +51,21 @@ from pymongo.errors import ConnectionFailure, OperationFailure, AutoReconnect
 """ Global path variables
     """
 PORTS_ONE = {"PRIMARY": "27117", "SECONDARY": "27118", "ARBITER": "27119",
-    "CONFIG": "27220", "MONGOS": "27117"}
+             "CONFIG": "27220", "MONGOS": "27117"}
 conn = None
 NUMBER_OF_DOCS = 10000
 c = None
 s = None
 
+
 class TestDump(unittest.TestCase):
 
     def runTest(self):
         unittest.TestCase.__init__(self)
-    
+
     def setUp(self):
         conn['test']['test'].remove(safe=True)
-        while (len(s._search()) != 0):
+        while len(s._search()) != 0:
             time.sleep(1)
 
     def test_initial_dump(self):
@@ -77,26 +78,28 @@ class TestDump(unittest.TestCase):
             conn['test']['test'].insert({'name': 'Paul', 'number': i})
         time.sleep(5)
         c.start()
-        for i in range(NUMBER_OF_DOCS-1, -1, -1):
-            conn['test']['test'].update({'number': i}, {'name': 'Pauline', 'number' : i})
+        for i in range(NUMBER_OF_DOCS - 1, -1, -1):
+            conn['test']['test'].update({'number': i},
+                                        {'name': 'Pauline', 'number': i})
             if i % 2 == 0:
-                conn['test']['test'].update({'number': i}, {'name' : 'Pauline', 'number' : i, 'info': long_string})
+                conn['test']['test'].update({'number': i},
+                                            {'name': 'Pauline', 'number': i,
+                                             'info': long_string})
         while True:
-            error = False;
+            error = False
             for doc in s._search():
                 if('Pauline' != doc['name']):
-                    error = True;
+                    error = True
                     time.sleep(1)
-                    break;
+                    break
                 if doc['number'] % 2 == 0:
                     if(doc['info'] != long_string):
                         time.sleep(1)
-                        break;
+                        break
             if error is False:
-                break;
-                                
+                break
 
-        print ("PASSED INITIAL DUMP TEST");
+        print ("PASSED INITIAL DUMP TEST")
 
 
 def abort_test(self):
@@ -106,16 +109,16 @@ def abort_test(self):
 if __name__ == '__main__':
     os.system('rm config.txt; touch config.txt')
     parser = OptionParser()
-    
+
     #-m is for the main address, which is a host:port pair, ideally of the
     #mongos. For non sharded clusters, it can be the primary.
     parser.add_option("-m", "--main", action="store", type="string",
                       dest="main_addr", default="27217")
-    
+
     (options, args) = parser.parse_args()
     PORTS_ONE['MONGOS'] = options.main_addr
     c = Connector('localhost:' + PORTS_ONE["MONGOS"], 'config.txt', None,
-              ['test.test'], '_id', None, None)
+                  ['test.test'], '_id', None, None)
     s = c.doc_manager
     if options.main_addr != "27217":
         start_cluster(use_mongos=False)

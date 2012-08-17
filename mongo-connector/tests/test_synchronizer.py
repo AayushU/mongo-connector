@@ -188,7 +188,7 @@ class TestSynchronizer(unittest.TestCase):
                 if (it['name'] == 'Paul' + str(i)):
                     self.assertEqual(it['_id'], it['_id'])
         print("PASSED TEST STRESS")
-            
+
     def test_stressed_rollback(self):
         """Test stressed rollback with number of documents equal to specified
         in global variable. Rollback is performed like before, but with more

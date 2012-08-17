@@ -256,7 +256,7 @@ class OplogThread(threading.Thread):
         long_ts = util.bson_ts_to_long(timestamp)
         if timestamp is None:
             return None
-                        
+
         for namespace in dump_set:
             db, coll = namespace.split('.', 1)
             target_coll = self.main_connection[db][coll]
