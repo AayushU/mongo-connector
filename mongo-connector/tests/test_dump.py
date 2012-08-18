@@ -75,29 +75,40 @@ class TestDump(unittest.TestCase):
         long_string = 'long string '
         long_string *= 42
         for i in range(0, NUMBER_OF_DOCS):
-            conn['test']['test'].insert({'name': 'Paul', 'number': i})
+            conn['test']['test'].insert({'updated': False, 'number': i})
         time.sleep(5)
         c.start()
         for i in range(NUMBER_OF_DOCS - 1, -1, -1):
-            conn['test']['test'].update({'number': i},
-                                        {'name': 'Pauline', 'number': i})
+            if i % 2 == 1:
+                conn['test']['test'].update({'number': i},
+                                        {'updated': True, 'number': i})
             if i % 2 == 0:
                 conn['test']['test'].update({'number': i},
-                                            {'name': 'Pauline', 'number': i,
+                                            {'updated': True, 'number': i,
                                              'info': long_string})
+        count = 0
         while True:
-            error = False
-            for doc in s._search():
-                if('Pauline' != doc['name']):
-                    error = True
-                    time.sleep(1)
-                    break
-                if doc['number'] % 2 == 0:
-                    if(doc['info'] != long_string):
+            try:
+                error = False
+                for doc in s._search():
+                    if(doc['updated'] is False):
+                        error = True
                         time.sleep(1)
                         break
-            if error is False:
-                break
+                    if doc['number'] % 2 == 0:
+                        if(doc['info'] != long_string):
+                            time.sleep(1)
+                            break
+                if error is False:
+                    break
+            except:
+                count += 1
+                if count > 300:
+                    string = 'Docs took too long to update in test dump'
+                    logging.error(string)
+                    sys.exit(1)
+                time.sleep(1)
+                continue
 
         print ("PASSED INITIAL DUMP TEST")
 
