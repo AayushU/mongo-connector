@@ -81,7 +81,7 @@ class TestDump(unittest.TestCase):
         for i in range(NUMBER_OF_DOCS - 1, -1, -1):
             if i % 2 == 1:
                 conn['test']['test'].update({'number': i},
-                                        {'updated': True, 'number': i})
+                                            {'updated': True, 'number': i})
             if i % 2 == 0:
                 conn['test']['test'].update({'number': i},
                                             {'updated': True, 'number': i,
