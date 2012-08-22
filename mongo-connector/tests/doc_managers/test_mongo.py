@@ -56,7 +56,7 @@ from pymongo.errors import ConnectionFailure, OperationFailure, AutoReconnect
 """
 PORTS_ONE = {"PRIMARY": "27117", "SECONDARY": "27118", "ARBITER": "27119",
              "CONFIG": "27220", "MONGOS": "27217"}
-s = None
+doc_manager = None
 conn = None
 NUMBER_OF_DOCS = 100
 
@@ -81,7 +81,7 @@ class TestSynchronizer(unittest.TestCase):
         while len(self.c.shard_set) == 0:
             pass
         conn['test']['test'].remove(safe=True)
-        while(len(s._search()) != 0):
+        while(len(doc_manager._search()) != 0):
             time.sleep(1)
 
     def test_shard_length(self):
@@ -98,7 +98,7 @@ class TestSynchronizer(unittest.TestCase):
 
         conn['test']['test'].remove(safe=True)
         self.assertEqual(conn['test']['test'].find().count(), 0)
-        self.assertEqual(len(s._search()), 0)
+        self.assertEqual(len(doc_manager._search()), 0)
         print("PASSED TEST INITIAL")
 
     def test_insert(self):
@@ -106,9 +106,9 @@ class TestSynchronizer(unittest.TestCase):
         """
 
         conn['test']['test'].insert({'name': 'paulie'}, safe=True)
-        while(len(s._search()) == 0):
+        while(len(doc_manager._search()) == 0):
             time.sleep(1)
-        a = s._search()
+        a = doc_manager._search()
         self.assertEqual(len(a), 1)
         b = conn['test']['test'].find_one()
         for it in a:
@@ -121,13 +121,13 @@ class TestSynchronizer(unittest.TestCase):
         """
 
         conn['test']['test'].insert({'name': 'paulie'}, safe=True)
-        while(len(s._search()) != 1):
+        while(len(doc_manager._search()) != 1):
             time.sleep(1)
         conn['test']['test'].remove({'name': 'paulie'}, safe=True)
 
-        while(len(s._search()) == 1):
+        while(len(doc_manager._search()) == 1):
             time.sleep(1)
-        a = s._search()
+        a = doc_manager._search()
         self.assertEqual(len(a), 0)
         print("PASSED TEST REMOVE")
 
@@ -142,7 +142,7 @@ class TestSynchronizer(unittest.TestCase):
         conn['test']['test'].insert({'name': 'paul'}, safe=True)
         while conn['test']['test'].find({'name': 'paul'}).count() != 1:
             time.sleep(1)
-        while len(s._search()) != 1:
+        while len(doc_manager._search()) != 1:
             time.sleep(1)
 
         killMongoProc('localhost', PORTS_ONE['PRIMARY'])
@@ -164,9 +164,9 @@ class TestSynchronizer(unittest.TestCase):
                 if count >= 60:
                     sys.exit(1)
                 continue
-        while(len(s._search()) != 2):
+        while(len(doc_manager._search()) != 2):
             time.sleep(1)
-        a = s._search()
+        a = doc_manager._search()
         b = conn['test']['test'].find_one({'name': 'pauline'})
         self.assertEqual(len(a), 2)
                 #make sure pauling is there
@@ -184,7 +184,7 @@ class TestSynchronizer(unittest.TestCase):
                        "/replset1b.log", None)
 
         time.sleep(2)
-        a = s._search()
+        a = doc_manager._search()
         self.assertEqual(len(a), 1)
         for it in a:
             self.assertEqual(it['name'], 'paul')
@@ -201,10 +201,10 @@ class TestSynchronizer(unittest.TestCase):
         for i in range(0, NUMBER_OF_DOCS):
             conn['test']['test'].insert({'name': 'Paul ' + str(i)})
         time.sleep(5)
-        while len(s._search()) != NUMBER_OF_DOCS:
+        while len(doc_manager._search()) != NUMBER_OF_DOCS:
             time.sleep(5)
         for i in range(0, NUMBER_OF_DOCS):
-            a = s._search()
+            a = doc_manager._search()
             b = conn['test']['test'].find_one({'name': 'Paul ' + str(i)})
             for it in a:
                 if(it['name'] == 'Paul' + str(i)):
@@ -216,12 +216,12 @@ class TestSynchronizer(unittest.TestCase):
             in global variable. Strategy for rollback is the same as before.
         """
 
-        while len(s._search()) != 0:
+        while len(doc_manager._search()) != 0:
             time.sleep(1)
         for i in range(0, NUMBER_OF_DOCS):
             conn['test']['test'].insert({'name': 'Paul ' + str(i)}, safe=True)
 
-        while len(s._search()) != NUMBER_OF_DOCS:
+        while len(doc_manager._search()) != NUMBER_OF_DOCS:
             time.sleep(1)
         primary_conn = Connection('localhost', int(PORTS_ONE['PRIMARY']))
         killMongoProc('localhost', PORTS_ONE['PRIMARY'])
@@ -240,9 +240,9 @@ class TestSynchronizer(unittest.TestCase):
                                             safe=True)
             except (OperationFailure, AutoReconnect):
                 time.sleep(1)
-        while (len(s._search()) != conn['test']['test'].find().count()):
+        while (len(doc_manager._search()) != conn['test']['test'].find().count()):
             time.sleep(1)
-        a = s._search()
+        a = doc_manager._search()
         for it in a:
             if 'Pauline' in it['name']:
                 b = conn['test']['test'].find_one({'name': it['name']})
@@ -258,10 +258,10 @@ class TestSynchronizer(unittest.TestCase):
         startMongoProc(PORTS_ONE['SECONDARY'], "demo-repl", "/replset1b",
                        "/replset1b.log", None)
 
-        while(len(s._search()) != NUMBER_OF_DOCS):
+        while(len(doc_manager._search()) != NUMBER_OF_DOCS):
             time.sleep(5)
 
-        a = s._search()
+        a = doc_manager._search()
         self.assertEqual(len(a), NUMBER_OF_DOCS)
         for it in a:
             self.assertTrue('Paul' in it['name'])
@@ -286,8 +286,8 @@ if __name__ == '__main__':
 
     (options, args) = parser.parse_args()
     PORTS_ONE['MONGOS'] = options.main_addr
-    s = DocManager('localhost:30000')
-    s._remove()
+    doc_manager = DocManager('localhost:30000')
+    doc_manager._remove()
 
     start_cluster()
 

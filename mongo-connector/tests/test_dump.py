@@ -54,8 +54,8 @@ PORTS_ONE = {"PRIMARY": "27117", "SECONDARY": "27118", "ARBITER": "27119",
              "CONFIG": "27220", "MONGOS": "27117"}
 conn = None
 NUMBER_OF_DOCS = 10000
-c = None
-s = None
+connector = None
+doc_manager = None
 
 
 class TestDump(unittest.TestCase):
@@ -65,7 +65,7 @@ class TestDump(unittest.TestCase):
 
     def setUp(self):
         conn['test']['test'].remove(safe=True)
-        while len(s._search()) != 0:
+        while len(doc_manager._search()) != 0:
             time.sleep(1)
 
     def test_initial_dump(self):
@@ -77,19 +77,19 @@ class TestDump(unittest.TestCase):
         for i in range(0, NUMBER_OF_DOCS):
             conn['test']['test'].insert({'updated': False, 'number': i})
         time.sleep(5)
-        c.start()
+        connector.start()
         for i in range(NUMBER_OF_DOCS - 1, -1, -1):
             if i % 2 == 1:
                 conn['test']['test'].update({'number': i},
                                             {'updated': True, 'number': i})
-            if i % 2 == 0:
+            else:
                 conn['test']['test'].update({'number': i},
                                             {'updated': True, 'number': i,
                                              'info': long_string})
         count = 0
         while True:
             error = False
-            for doc in s._search():
+            for doc in doc_manager._search():
                 if count > 300:
                     string = 'Docs took too long to update in test dump'
                     logging.error(string)
@@ -127,9 +127,9 @@ if __name__ == '__main__':
 
     (options, args) = parser.parse_args()
     PORTS_ONE['MONGOS'] = options.main_addr
-    c = Connector('localhost:' + PORTS_ONE["MONGOS"], 'config.txt', None,
+    connector = Connector('localhost:' + PORTS_ONE["MONGOS"], 'config.txt', None,
                   ['test.test'], '_id', None, None)
-    s = c.doc_manager
+    doc_manager = connector.doc_manager
     if options.main_addr != "27217":
         start_cluster(use_mongos=False)
     else:
@@ -137,4 +137,4 @@ if __name__ == '__main__':
     conn = Connection('localhost:' + PORTS_ONE['MONGOS'],
                       replicaSet="demo-repl")
     unittest.main(argv=[sys.argv[0]])
-    c.join()
+    connectorjoin()

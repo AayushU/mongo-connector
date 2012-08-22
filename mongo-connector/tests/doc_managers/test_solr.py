@@ -54,7 +54,7 @@ from pymongo.errors import ConnectionFailure, OperationFailure, AutoReconnect
 """
 PORTS_ONE = {"PRIMARY": "27117", "SECONDARY": "27118", "ARBITER": "27119",
              "CONFIG": "27220", "MAIN": "27217"}
-s = Solr('http://localhost:8080/solr')
+solr = Solr('http://localhost:8080/solr')
 conn = None
 NUMBER_OF_DOCS = 100
 
@@ -88,7 +88,7 @@ class TestSynchronizer(unittest.TestCase):
                     string += ' in setUp'
                     logging.error(string)
                     sys.exit(1)
-        while (len(s.search('*:*')) != 0):
+        while (len(solr.search('*:*')) != 0):
             time.sleep(1)
 
     def tearDown(self):
@@ -114,9 +114,9 @@ class TestSynchronizer(unittest.TestCase):
             except:
                 continue
 
-        s.delete(q='*:*')
+        solr.delete(q='*:*')
         self.assertEqual(conn['test']['test'].find().count(), 0)
-        self.assertEqual(len(s.search('*:*')), 0)
+        self.assertEqual(len(solr.search('*:*')), 0)
         print("PASSED TEST INITIAL")
 
     def test_insert(self):
@@ -124,9 +124,9 @@ class TestSynchronizer(unittest.TestCase):
         """
 
         conn['test']['test'].insert({'name': 'paulie'}, safe=True)
-        while (len(s.search('*:*')) == 0):
+        while (len(solr.search('*:*')) == 0):
             time.sleep(1)
-        a = s.search('paulie')
+        a = solr.search('paulie')
         self.assertEqual(len(a), 1)
         b = conn['test']['test'].find_one()
         for it in a:
@@ -139,9 +139,9 @@ class TestSynchronizer(unittest.TestCase):
         """
 
         conn['test']['test'].remove({'name': 'paulie'}, safe=True)
-        while (len(s.search('*:*')) == 1):
+        while (len(solr.search('*:*')) == 1):
             time.sleep(1)
-        a = s.search('paulie')
+        a = solr.search('paulie')
         self.assertEqual(len(a), 0)
         print("PASSED TEST REMOVE")
 
@@ -156,7 +156,7 @@ class TestSynchronizer(unittest.TestCase):
         conn['test']['test'].insert({'name': 'paul'}, safe=True)
         while conn['test']['test'].find({'name': 'paul'}).count() != 1:
             time.sleep(1)
-        while len(s.search('*:*')) != 1:
+        while len(solr.search('*:*')) != 1:
             time.sleep(1)
         killMongoProc('localhost', PORTS_ONE['PRIMARY'])
 
@@ -180,10 +180,10 @@ class TestSynchronizer(unittest.TestCase):
                 time.sleep(1)
                 continue
 
-        while (len(s.search('*:*')) != 2):
+        while (len(solr.search('*:*')) != 2):
             time.sleep(1)
 
-        a = s.search('pauline')
+        a = solr.search('pauline')
         b = conn['test']['test'].find_one({'name': 'pauline'})
         self.assertEqual(len(a), 1)
         for it in a:
@@ -200,9 +200,9 @@ class TestSynchronizer(unittest.TestCase):
                        "/replset1b.log", None)
 
         time.sleep(2)
-        a = s.search('pauline')
+        a = solr.search('pauline')
         self.assertEqual(len(a), 0)
-        a = s.search('paul')
+        a = solr.search('paul')
         self.assertEqual(len(a), 1)
         print("PASSED TEST ROLLBACK")
 
@@ -213,10 +213,10 @@ class TestSynchronizer(unittest.TestCase):
         for i in range(0, NUMBER_OF_DOCS):
             conn['test']['test'].insert({'name': 'Paul ' + str(i)})
         time.sleep(5)
-        while len(s.search('*:*', rows=NUMBER_OF_DOCS)) != NUMBER_OF_DOCS:
+        while len(solr.search('*:*', rows=NUMBER_OF_DOCS)) != NUMBER_OF_DOCS:
             time.sleep(5)
         for i in range(0, NUMBER_OF_DOCS):
-            a = s.search('Paul ' + str(i))
+            a = solr.search('Paul ' + str(i))
             b = conn['test']['test'].find_one({'name': 'Paul ' + str(i)})
             for it in a:
                 self.assertEqual(it['_id'], it['_id'])
@@ -229,12 +229,12 @@ class TestSynchronizer(unittest.TestCase):
         """
 
         conn['test']['test'].remove()
-        while len(s.search('*:*', rows=NUMBER_OF_DOCS)) != 0:
+        while len(solr.search('*:*', rows=NUMBER_OF_DOCS)) != 0:
             time.sleep(1)
         for i in range(0, NUMBER_OF_DOCS):
             conn['test']['test'].insert({'name': 'Paul ' + str(i)}, safe=True)
 
-        while len(s.search('*:*', rows=NUMBER_OF_DOCS)) != NUMBER_OF_DOCS:
+        while len(solr.search('*:*', rows=NUMBER_OF_DOCS)) != NUMBER_OF_DOCS:
             time.sleep(1)
         primary_conn = Connection('localhost', int(PORTS_ONE['PRIMARY']))
         killMongoProc('localhost', PORTS_ONE['PRIMARY'])
@@ -254,10 +254,10 @@ class TestSynchronizer(unittest.TestCase):
             except (OperationFailure, AutoReconnect):
                 time.sleep(1)
 
-        while (len(s.search('*:*', rows=NUMBER_OF_DOCS * 2)) !=
+        while (len(solr.search('*:*', rows=NUMBER_OF_DOCS * 2)) !=
                conn['test']['test'].find().count()):
             time.sleep(1)
-        a = s.search('Pauline', rows=NUMBER_OF_DOCS * 2, sort='_id asc')
+        a = solr.search('Pauline', rows=NUMBER_OF_DOCS * 2, sort='_id asc')
         for it in a:
             b = conn['test']['test'].find_one({'name': it['name']})
             self.assertEqual(it['_id'], str(b['_id']))
@@ -272,11 +272,11 @@ class TestSynchronizer(unittest.TestCase):
         startMongoProc(PORTS_ONE['SECONDARY'], "demo-repl", "/replset1b",
                        "/replset1b.log", None)
 
-        while (len(s.search('Pauline', rows=NUMBER_OF_DOCS * 2)) != 0):
+        while (len(solr.search('Pauline', rows=NUMBER_OF_DOCS * 2)) != 0):
             time.sleep(15)
-        a = s.search('Pauline', rows=NUMBER_OF_DOCS * 2)
+        a = solr.search('Pauline', rows=NUMBER_OF_DOCS * 2)
         self.assertEqual(len(a), 0)
-        a = s.search('Paul', rows=NUMBER_OF_DOCS * 2)
+        a = solr.search('Paul', rows=NUMBER_OF_DOCS * 2)
         self.assertEqual(len(a), NUMBER_OF_DOCS)
         print("PASSED TEST STRESSED ROLBACK")
 
@@ -286,7 +286,7 @@ class TestSynchronizer(unittest.TestCase):
 
 if __name__ == '__main__':
     os.system('rm config.txt; touch config.txt')
-    s.delete(q='*:*')
+    solr.delete(q='*:*')
     parser = OptionParser()
 
     #-m is for the main address, which is a host:port pair, ideally of the
