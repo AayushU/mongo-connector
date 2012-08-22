@@ -253,9 +253,9 @@ class OplogThread(threading.Thread):
                     dump_set.append(namespace)
 
         timestamp = util.retry_until_ok(self.get_last_oplog_timestamp)
-        long_ts = util.bson_ts_to_long(timestamp)
         if timestamp is None:
             return None
+        long_ts = util.bson_ts_to_long(timestamp)
 
         for namespace in dump_set:
             db, coll = namespace.split('.', 1)
@@ -263,20 +263,19 @@ class OplogThread(threading.Thread):
             cursor = util.retry_until_ok(target_coll.find)
             try:
                 for doc in cursor:
-                    time.sleep(1)
                     doc['ns'] = namespace
                     doc['_ts'] = long_ts
                     self.doc_manager.upsert(doc)
-            except pymongo.errors.AutoReconnect:
+            except pymongo.errors.AutoReconnect as e:
                 err_msg = "OplogManager: Failed during dump collection. "
-                err_msg += "AutoReconnect error."
+                err_msg += "AutoReconnect error: %s." % e 
                 effect = " Cannot recover!"
                 logging.error('%s %s %s' % (err_msg, effect, self.oplog))
                 self.running = False
                 return
-            except pymongo.errors.OperationFailure:
+            except pymongo.errors.OperationFailure as e:
                 err_msg = "OplogManager: Failed during dump collection"
-                err_msg += "OperationFailure error."
+                err_msg += "OperationFailure error: %s." % e
                 effect = " Cannot recover!"
                 logging.error('%s %s %s' % (err_msg, effect, self.oplog))
                 self.running = False

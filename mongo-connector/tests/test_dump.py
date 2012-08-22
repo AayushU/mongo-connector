@@ -46,14 +46,14 @@ from pysolr import Solr
 from mongo_connector import Connector
 from optparse import OptionParser
 from util import retry_until_ok
-from pymongo.errors import ConnectionFailure, OperationFailure, AutoReconnect
+import pymongo
 
 """ Global path variables
     """
 PORTS_ONE = {"PRIMARY": "27117", "SECONDARY": "27118", "ARBITER": "27119",
              "CONFIG": "27220", "MONGOS": "27117"}
 conn = None
-NUMBER_OF_DOCS = 10000
+NUMBER_OF_DOCS = 100
 c = None
 s = None
 
@@ -95,18 +95,19 @@ class TestDump(unittest.TestCase):
                         error = True
                         time.sleep(1)
                         break
-                    if doc['number'] % 2 == 0:
+                    else:
                         if(doc['info'] != long_string):
                             time.sleep(1)
                             break
                 if error is False:
                     break
-            except:
+            except (pymongo.errors.AutoReconnect,
+                    pymongo.errors.OperationFailure):
                 count += 1
                 if count > 300:
                     string = 'Docs took too long to update in test dump'
                     logging.error(string)
-                    sys.exit(1)
+                    self.assertTrue(False)
                 time.sleep(1)
                 continue
 
