@@ -137,4 +137,4 @@ if __name__ == '__main__':
     conn = Connection('localhost:' + PORTS_ONE['MONGOS'],
                       replicaSet="demo-repl")
     unittest.main(argv=[sys.argv[0]])
-    connectorjoin()
+    connector.join()
