@@ -53,7 +53,7 @@ import pymongo
 PORTS_ONE = {"PRIMARY": "27117", "SECONDARY": "27118", "ARBITER": "27119",
              "CONFIG": "27220", "MONGOS": "27117"}
 conn = None
-NUMBER_OF_DOCS = 100
+NUMBER_OF_DOCS = 10000
 c = None
 s = None
 
@@ -88,28 +88,26 @@ class TestDump(unittest.TestCase):
                                              'info': long_string})
         count = 0
         while True:
-            try:
-                error = False
-                for doc in s._search():
-                    if(doc['updated'] is False):
-                        error = True
-                        time.sleep(1)
-                        break
-                    else:
-                        if(doc['info'] != long_string):
-                            time.sleep(1)
-                            break
-                if error is False:
-                    break
-            except (pymongo.errors.AutoReconnect,
-                    pymongo.errors.OperationFailure):
-                count += 1
+            error = False
+            for doc in s._search():
                 if count > 300:
                     string = 'Docs took too long to update in test dump'
                     logging.error(string)
                     self.assertTrue(False)
-                time.sleep(1)
-                continue
+                
+                if(doc['updated'] is False):
+                    error = True
+                    count += 1
+                    time.sleep(1)
+                    break
+                if (doc['number'] % 2 == 0):
+                    if(doc['info'] != long_string):
+                        error = True
+                        count += 1
+                        time.sleep(1)
+                        break
+            if error is False:
+                break
 
         print ("PASSED INITIAL DUMP TEST")
 
