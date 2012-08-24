@@ -153,8 +153,6 @@ class OplogThread(threading.Thread):
                 self.checkpoint = last_ts
                 self.update_checkpoint()
 
-            time.sleep(2)
-
     def join(self):
         """Stop this thread from managing the oplog.
         """
