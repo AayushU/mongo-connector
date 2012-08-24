@@ -266,16 +266,10 @@ class OplogThread(threading.Thread):
                     doc['ns'] = namespace
                     doc['_ts'] = long_ts
                     self.doc_manager.upsert(doc)
-            except pymongo.errors.AutoReconnect as e:
+            except (pymongo.errors.AutoReconnect,
+                    pymongo.errors.OperationFailure) as e:
                 err_msg = "OplogManager: Failed during dump collection. "
-                err_msg += "AutoReconnect error: %s." % e 
-                effect = " Cannot recover!"
-                logging.error('%s %s %s' % (err_msg, effect, self.oplog))
-                self.running = False
-                return
-            except pymongo.errors.OperationFailure as e:
-                err_msg = "OplogManager: Failed during dump collection"
-                err_msg += "OperationFailure error: %s." % e
+                err_msg += "Error: %s." % e 
                 effect = " Cannot recover!"
                 logging.error('%s %s %s' % (err_msg, effect, self.oplog))
                 self.running = False
