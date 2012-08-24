@@ -117,6 +117,8 @@ class OplogThread(threading.Thread):
             err = False
             try:
                 for entry in cursor:
+                    if 'fromMigrate' in entry and entry['fromMigrate'] is True:
+                        continue
                     #sync the current oplog operation
                     operation = entry['op']
                     ns = entry['ns']
