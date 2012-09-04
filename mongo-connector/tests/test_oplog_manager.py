@@ -287,7 +287,7 @@ class TestOplogManager(unittest.TestCase):
 
         mongos['test']['test'].remove({})
         mongos['test']['test'].insert({'_id': obj1, 'name': 'paulie'},
-                                      safe=1)
+                                      safe=True)
         while (mongos['test']['test'].find().count() != 1):
             time.sleep(1)
         cutoff_ts = test_oplog.get_last_oplog_timestamp()
@@ -310,7 +310,7 @@ class TestOplogManager(unittest.TestCase):
         while True:
             try:
                 current_conn = mongos['test']['test']
-                current_conn.insert({'_id':  obj2, 'name':  'paul'}, safe=1)
+                current_conn.insert({'_id':  obj2, 'name':  'paul'}, safe=True)
                 break
             except:
                 count += 1
