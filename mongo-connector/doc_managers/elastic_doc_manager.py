@@ -23,6 +23,11 @@
     backends. To extend this to other systems, simply implement the exact
     same class and replace the method definitions with API calls for the
     desired backend.
+    
+    There are some issues with the current version of pyes, where repeated
+    warnings of 'urllib3.connectionpool:HttpConnectionPool is full' may 
+    show up. The syncing still works nevertheless.
+    
     """
 
 import sys
@@ -128,7 +133,7 @@ class DocManager():
 
         it = None
         q = MatchAllQuery()
-        result = self.elastic.search(q, size=1, sort={'_ts:desc'})
+        result = self.elastic.search(query=q, size=1, sort='_ts:desc')
         for it in result:
             r = it
             break

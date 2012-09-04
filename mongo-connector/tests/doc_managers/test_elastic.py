@@ -56,7 +56,7 @@ from pymongo.errors import ConnectionFailure, OperationFailure, AutoReconnect
 """
 PORTS_ONE = {"PRIMARY": "27117", "SECONDARY": "27118", "ARBITER": "27119",
              "CONFIG": "27220", "MONGOS": "27217"}
-elastic = None
+elastic = DocManager('http://localhost:9200')
 conn = None
 NUMBER_OF_DOCS = 100
 
@@ -72,7 +72,7 @@ class TestSynchronizer(unittest.TestCase):
         self.c.doc_manager.auto_commit = False
         time.sleep(2)
         self.c.join()
-
+    
     def setUp(self):
         self.c = Connector('localhost:' + PORTS_ONE["MONGOS"],
                            'config.txt', 'http://localhost:9200',
@@ -81,8 +81,20 @@ class TestSynchronizer(unittest.TestCase):
                            '/../../doc_managers/elastic_doc_manager.py')
         self.c.start()
         while len(self.c.shard_set) == 0:
-            pass
-        conn['test']['test'].remove(safe=True)
+            time.sleep(1)
+        count = 0
+        while (True):
+            try:
+                conn['test']['test'].remove(safe=True)
+                break
+            except (AutoReconnect, OperationFailure):
+                time.sleep(1)
+                count += 1
+                if count > 60:
+                    string = 'Call to remove failed too many times'
+                    string += ' in setUp'
+                    logging.error(string)
+                    sys.exit(1)
         while(len(elastic._search()) != 0):
             time.sleep(1)
 
@@ -98,7 +110,6 @@ class TestSynchronizer(unittest.TestCase):
         """Tests search and assures that the databases are clear.
         """
 
-        conn['test']['test'].remove(safe=True)
         self.assertEqual(conn['test']['test'].find().count(), 0)
         self.assertEqual(len(elastic._search()), 0)
         print("PASSED TEST INITIAL")
@@ -279,6 +290,7 @@ def abort_test(self):
 
 if __name__ == '__main__':
     os.system('rm config.txt; touch config.txt')
+    elastic._remove()
     parser = OptionParser()
 
     #-m is for the main address, which is a host:port pair, ideally of the
@@ -288,8 +300,7 @@ if __name__ == '__main__':
 
     (options, args) = parser.parse_args()
     PORTS_ONE['MONGOS'] = options.main_addr
-    elastic = DocManager('http://localhost:9200', auto_commit=False)
-    elastic._remove()
+    # elastic = DocManager('http://localhost:9200', auto_commit=True)
     start_cluster()
 
     conn = Connection('localhost:' + PORTS_ONE['MONGOS'],

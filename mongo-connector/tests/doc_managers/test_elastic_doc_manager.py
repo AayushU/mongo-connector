@@ -44,7 +44,6 @@ class ElasticDocManagerTester(unittest.TestCase):
         """Ensure DocManager fails for a bad Solr url.
         """
         #Invalid URL
-        #Invalid URL
         count = 0
         try:
             e = DocManager("http://doesntexist.cskjdfhskdjfhdsom")
@@ -149,9 +148,9 @@ class ElasticDocManagerTester(unittest.TestCase):
         """
         docc = {'_id': '4', 'name': 'Hare', '_ts': 3, 'ns': 'test.test'}
         ElasticDoc.upsert(docc)
-        docc = {'_id': '5', 'name': 'Tortoise', '_ts': 2, 'ns': 'test.test'}
+        docc = {'_id': '5', 'name': 'Tortoise', '_ts': 1, 'ns': 'test.test'}
         ElasticDoc.upsert(docc)
-        docc = {'_id': '6', 'name': 'Mr T.', '_ts': 1, 'ns': 'test.test'}
+        docc = {'_id': '6', 'name': 'Mr T.', '_ts': 2, 'ns': 'test.test'}
         ElasticDoc.upsert(docc)
         elastic.refresh()
         doc = ElasticDoc.get_last_doc()

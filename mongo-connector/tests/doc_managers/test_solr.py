@@ -106,15 +106,7 @@ class TestSynchronizer(unittest.TestCase):
     def test_initial(self):
         """Tests search and assures that the databases are clear.
         """
-
-        while (True):
-            try:
-                conn['test']['test'].remove(safe=True)
-                break
-            except:
-                continue
-
-        solr.delete(q='*:*')
+        
         self.assertEqual(conn['test']['test'].find().count(), 0)
         self.assertEqual(len(solr.search('*:*')), 0)
         print("PASSED TEST INITIAL")
